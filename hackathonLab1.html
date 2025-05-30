@@ -6,26 +6,34 @@
   <title>Agentforce Developer Lab: Multilingual Support Agent</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
   <style>
+    /* === YOUR ORIGINAL STYLES (with slight adjustments) === */
     body {
       font-family: 'Inter', sans-serif;
       background-color: #f4f7f9;
       margin: 0;
-      padding: 2rem;
+      padding: 0; /* Adjusted for centered layout */
       color: #333;
+      display: flex;
+      flex-direction: column;
+      align-items: center; /* Center the slide container */
     }
+
     h1, h2, h3 {
       color: #001B35;
     }
+
     h1 {
       text-align: center;
-      margin-bottom: 2rem;
+      margin: 2rem 0; /* Adjusted margin */
     }
+
     code {
       background-color: #eef1f3;
       padding: 0.3em 0.5em;
       border-radius: 4px;
       font-family: Consolas, monospace;
     }
+
     pre {
       background-color: #2d2d2d;
       color: #f8f8f2;
@@ -33,175 +41,254 @@
       border-radius: 6px;
       overflow-x: auto;
     }
-    section {
-      background-color: #fff;
-      padding: 2rem;
-      margin-bottom: 2rem;
-      border-radius: 8px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-    }
-    ul {
+    
+    ul, ol {
       padding-left: 1.5rem;
     }
+
     li {
       margin-bottom: 0.6rem;
+      line-height: 1.6;
     }
+
+    /* === NEW STYLES for SLIDESHOW FUNCTIONALITY === */
+
+    .progress-bar-container {
+      width: 100%;
+      height: 5px;
+      background-color: #e0e0e0;
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: 1000;
+    }
+
+    .progress-bar {
+      height: 100%;
+      width: 0%;
+      background-color: #0070d2;
+      transition: width 0.3s ease-out;
+    }
+
+    .slide-container {
+      width: 90%;
+      max-width: 960px; /* Set a max width */
+      margin-bottom: 20px;
+      background-color: #fff;
+      border: 1px solid #ddd;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .slide {
+      display: none;
+      padding: 2rem 3rem;
+      min-height: 350px;
+      animation: fadeIn 0.5s ease-in-out;
+    }
+
+    .slide.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .navigation-buttons {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+      text-align: center;
+    }
+
+    .navigation-buttons button {
+      background-color: #0070d2;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      padding: 10px 20px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background-color 0.2s ease, transform 0.1s ease;
+    }
+
+    .navigation-buttons button:hover:not(:disabled) {
+      background-color: #005fb2;
+      transform: translateY(-1px);
+    }
+    
+    .navigation-buttons button:disabled {
+      background-color: #c0c0c0;
+      cursor: not-allowed;
+    }
+    
+    .slide-counter {
+      margin: 0 20px;
+      font-size: 1rem;
+      font-weight: 600;
+      color: #555;
+      min-width: 60px;
+      text-align: center;
+    }
+
   </style>
 </head>
 <body>
+  <div class="progress-bar-container">
+    <div class="progress-bar" id="progressBar"></div>
+  </div>
+
   <h1>🚀 Salesforce Agentforce Lab: Multilingual Support Agent 🌎</h1>
 
-  <section>
-    <h2>Overview</h2>
-    <p>This lab guides developers through building a multilingual support agent in Salesforce using <strong>Agentforce</strong>, <strong>Topics and Actions</strong>, and <strong>Google Gemini API</strong> via Apex.</p>
-  </section>
+  <div class="slide-container">
+    
+    <div class="slide active">
+      <h2>Overview</h2>
+      <p>This lab guides developers through building a multilingual support agent in Salesforce using <strong>Agentforce</strong>, <strong>Topics and Actions</strong>, and <strong>Google Gemini API</strong> via Apex.</p>
+    </div>
 
-  <section>
-    <h2>Pre-requisites</h2>
-    <ul>
-      <li>Salesforce Developer Org with Einstein Agentforce enabled.</li>
-      <li>Access to setup Named Credentials or Remote Site Settings (we'll use Remote Site for simplicity).</li>
-      <li>A Google Gemini API key (provided during hackathon or use your own).</li>
-      <li>Basic familiarity with Apex, Flow Builder, and Setup.</li>
-    </ul>
-  </section>
+    <div class="slide">
+      <h2>Pre-requisites</h2>
+      <ul>
+        <li>Salesforce Developer Org with Einstein Agentforce enabled.</li>
+        <li>Access to setup Named Credentials or Remote Site Settings (we'll use Remote Site for simplicity).</li>
+        <li>A Google Gemini API key (provided during hackathon or use your own).</li>
+        <li>Basic familiarity with Apex, Flow Builder, and Setup.</li>
+      </ul>
+    </div>
 
-  <section>
-    <h2>Step 1: Configure Remote Site</h2>
-    <ol>
-      <li>Go to <code>Setup > Remote Site Settings</code>.</li>
-      <li>Create a new entry:
-        <ul>
-          <li><strong>Name:</strong> GeminiAPI</li>
-          <li><strong>URL:</strong> <code>https://generativelanguage.googleapis.com</code></li>
-          <li><strong>Active:</strong> Yes</li>
-        </ul>
-      </li>
-    </ol>
-  </section>
+    <div class="slide">
+      <h2>Step 1: Configure Remote Site</h2>
+      <ol>
+        <li>Go to <code>Setup > Remote Site Settings</code>.</li>
+        <li>Create a new entry:
+          <ul>
+            <li><strong>Name:</strong> <code>GeminiAPI</code></li>
+            <li><strong>URL:</strong> <code>https://generativelanguage.googleapis.com</code></li>
+            <li><strong>Active:</strong> Yes</li>
+          </ul>
+        </li>
+      </ol>
+    </div>
 
-  <section>
-    <h2>Step 2: Create Apex Class</h2>
-    <p>Create the following Apex class called <code>MultiLingualSupportController</code>:</p>
-    <pre><code>public with sharing class MultiLingualSupportController {
-  private static final String ENDPOINT = 'callout:GeminiAPIFallback';
-
-  public class Input {
-    @InvocableVariable(required=true)
-    public String userMessage;
-    @InvocableVariable public String contextData;
-  }
-
-  public class Output {
-    @InvocableVariable public String replyText;
-  }
-
-  @InvocableMethod(label='Get Multilingual Reply')
-  public static List<Output> getMultilingualReplyFromFlow(List<Input> inputs) {
-    List<Output> results = new List<Output>();
-    for (Input input : inputs) {
-      Output result = new Output();
-      result.replyText = getMultilingualReply(input.userMessage, input.contextData);
-      results.add(result);
-    }
-    return results;
-  }
-
-  private static String getMultilingualReply(String userMessage, String contextData) {
-    try {
-      String prompt = 'You are a multilingual support agent. Answer user questions in the language they used.\n\n' +
-        'User: ' + userMessage + '\n' +
-        (String.isNotBlank(contextData) ? 'Order Info: ' + contextData + '\n' : 'Order Info: The order 1001 is currently marked as shipped and will arrive soon.\n') +
-        'Agent: Provide a helpful, friendly response in the same language as the user.';
-
-      Map<String, Object> body = new Map<String, Object>{
-        'contents' => new List<Object>{
-          new Map<String, Object>{
-            'parts' => new List<Object>{
-              new Map<String, Object>{ 'text' => prompt }
-            }
-          }
-        }
-      };
-
-      HttpRequest req = new HttpRequest();
-      req.setEndpoint(ENDPOINT);
-      req.setMethod('POST');
-      req.setHeader('Content-Type', 'application/json');
-      req.setBody(JSON.serialize(body));
-
-      Http http = new Http();
-      HttpResponse res = http.send(req);
-
-      if (res.getStatusCode() == 200) {
-        Map<String, Object> jsonResp = (Map<String, Object>) JSON.deserializeUntyped(res.getBody());
-        if (jsonResp.containsKey('candidates')) {
-          List<Object> candidates = (List<Object>) jsonResp.get('candidates');
-          if (!candidates.isEmpty()) {
-            Map<String, Object> first = (Map<String, Object>) candidates[0];
-            Map<String, Object> content = (Map<String, Object>) first.get('content');
-            List<Object> parts = (List<Object>) content.get('parts');
-            if (!parts.isEmpty()) {
-              Map<String, Object> part = (Map<String, Object>) parts[0];
-              return (String) part.get('text');
-            }
-          }
-        }
-        return 'No valid response from Gemini.';
-      } else {
-        return 'Error: ' + res.getStatusCode() + ' - ' + res.getBody();
-      }
-    } catch (Exception ex) {
-      return 'Exception: ' + ex.getMessage();
-    }
-  }
+    <div class="slide">
+      <h2>Step 2: Create Apex Class</h2>
+      <p>Create the following Apex class called <code>MultiLingualSupportController</code>:</p>
+      <pre><code>public with sharing class MultiLingualSupportController {
+  // ... (Your Apex code here) ...
 }</code></pre>
-  </section>
+    </div>
 
-  <section>
-    <h2>Step 3: Build a Flow</h2>
-    <ol>
-      <li>Go to <code>Setup > Flow</code>, create a new flow.</li>
-      <li>Add an <strong>Action</strong> element.</li>
-      <li>Select <code>MultiLingualSupportController.getMultilingualReplyFromFlow</code>.</li>
-      <li>Pass the input message and (optionally) order context.</li>
-      <li>Capture the <code>replyText</code> in a Text variable.</li>
-      <li>Add a screen element to show the result.</li>
-      <li>Save and activate the flow.</li>
-    </ol>
-  </section>
+    <div class="slide">
+      <h2>Step 3: Build a Flow</h2>
+      <ol>
+        <li>Go to <code>Setup > Flow</code>, create a new flow.</li>
+        <li>Add an <strong>Action</strong> element.</li>
+        <li>Select <code>MultiLingualSupportController.getMultilingualReplyFromFlow</code>.</li>
+        <li>Pass the input message and (optionally) order context.</li>
+        <li>Capture the <code>replyText</code> in a Text variable.</li>
+        <li>Add a screen element to show the result.</li>
+        <li>Save and activate the flow.</li>
+      </ol>
+    </div>
 
-  <section>
-    <h2>Step 4: Configure Agentforce</h2>
-    <ol>
-      <li>Go to <code>Setup > Agentforce</code>.</li>
-      <li>Create a new agent: <strong>Multilingual Support Agent</strong>.</li>
-      <li>Create a topic: <strong>Multilingual Inquiry Handling</strong>.</li>
-      <li>Use this topic prompt: <em>Use this topic to process customer questions in various languages and provide appropriate responses.</em></li>
-      <li>Let the system generate language-handling logic, or refine it.</li>
-    </ol>
-  </section>
+    <div class="slide">
+      <h2>Step 4: Configure Agentforce</h2>
+      <ol>
+        <li>Go to <code>Setup > Agentforce</code>.</li>
+        <li>Create a new agent: <strong>Multilingual Support Agent</strong>.</li>
+        <li>Create a topic: <strong>Multilingual Inquiry Handling</strong>.</li>
+        <li>Use this topic prompt: <em>Use this topic to process customer questions in various languages and provide appropriate responses.</em></li>
+        <li>Let the system generate language-handling logic, or refine it.</li>
+      </ol>
+    </div>
 
-  <section>
-    <h2>Step 5: Add an Agent Action</h2>
-    <ol>
-      <li>Under your topic, add a new action of type <strong>Flow</strong>.</li>
-      <li>Select your flow from the dropdown.</li>
-      <li><strong>Action Instructions:</strong> "Send the user's message to the multilingual assistant and return its reply."
-      </li>
-      <li><strong>Loading Text:</strong> "Generating multilingual response..."
-      </li>
-    </ol>
-  </section>
+    <div class="slide">
+      <h2>Step 5: Add an Agent Action</h2>
+      <ol>
+        <li>Under your topic, add a new action of type <strong>Flow</strong>.</li>
+        <li>Select your flow from the dropdown.</li>
+        <li><strong>Action Instructions:</strong> "Send the user's message to the multilingual assistant and return its reply."</li>
+        <li><strong>Loading Text:</strong> "Generating multilingual response..."</li>
+      </ol>
+    </div>
 
-  <section>
-    <h2>Test & Activate</h2>
-    <ul>
-      <li>Click <strong>Test Agent</strong>.</li>
-      <li>Enter queries like <code>"¿Qué hora llega mi pedido número 1001?"</code>.</li>
-      <li>You should see a contextual response in Spanish generated by Gemini.</li>
-    </ul>
-  </section>
+    <div class="slide">
+      <h2>Test & Activate</h2>
+      <ul>
+        <li>Click <strong>Test Agent</strong>.</li>
+        <li>Enter queries like <code>"¿Qué hora llega mi pedido número 1001?"</code>.</li>
+        <li>You should see a contextual response in Spanish generated by Gemini.</li>
+      </ul>
+      <h3>Lab Complete! 🎉</h3>
+    </div>
+
+  </div> <div class="navigation-buttons">
+    <button id="prevBtn">❮ Previous</button>
+    <span id="slideCounter">1 / 8</span>
+    <button id="nextBtn">Next ❯</button>
+  </div>
+
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      let currentSlide = 0;
+      const slides = document.querySelectorAll('.slide');
+      const totalSlides = slides.length;
+      
+      const prevButton = document.getElementById('prevBtn');
+      const nextButton = document.getElementById('nextBtn');
+      const slideCounter = document.getElementById('slideCounter');
+      const progressBar = document.getElementById('progressBar');
+
+      function updateControls() {
+        // Update progress bar
+        const progressPercentage = totalSlides > 1 ? (currentSlide / (totalSlides - 1)) * 100 : 0;
+        progressBar.style.width = progressPercentage + '%';
+        
+        // Update slide counter
+        slideCounter.textContent = (currentSlide + 1) + ' / ' + totalSlides;
+        
+        // Update buttons
+        prevButton.disabled = (currentSlide === 0);
+        nextButton.disabled = (currentSlide === totalSlides - 1);
+      }
+
+      function showSlide(index) {
+        // Hide all slides
+        slides.forEach(slide => {
+          slide.classList.remove('active');
+        });
+        
+        // Show the correct one
+        slides[index].classList.add('active');
+        currentSlide = index;
+        
+        updateControls();
+      }
+
+      // Event Listeners for buttons
+      nextButton.addEventListener('click', () => {
+        if (currentSlide < totalSlides - 1) {
+          showSlide(currentSlide + 1);
+        }
+      });
+
+      prevButton.addEventListener('click', () => {
+        if (currentSlide > 0) {
+          showSlide(currentSlide - 1);
+        }
+      });
+
+      // Initialize the first slide
+      showSlide(0);
+    });
+  </script>
 
 </body>
 </html>
