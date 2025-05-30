@@ -1,343 +1,408 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#0070d2">
-  <link rel="icon" href="favicon.ico" type="image/x-icon">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0070d2">
+    <link rel="icon" href="favicon.ico" type="image/x-icon">
+    <title>Agentforce Developer Lab: Multilingual Support Agent</title>
+    <style>
+        /* Polished styling inspired by your colleague's code */
+        body {
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            line-height: 1.7;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f7f9;
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-size: 1.05rem;
+        }
 
-  <title>Agentforce Developer Lab: Multilingual Support Agent</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
-  <style>
-    body {
-      font-family: 'Inter', sans-serif;
-      background-color: #f4f7f9;
-      margin: 0;
-      padding: 0;
-      color: #333;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-    h1, h2, h3 {
-      color: #001B35;
-    }
-    h1 {
-      text-align: center;
-      margin: 2rem 0;
-    }
-    code {
-      background-color: #eef1f3;
-      padding: 0.3em 0.5em;
-      border-radius: 4px;
-      font-family: Consolas, monospace;
-    }
-    pre {
-      background-color: #2d2d2d;
-      color: #f8f8f2;
-      padding: 1rem;
-      border-radius: 6px;
-      overflow-x: auto;
-      line-height: 1.5; /* Improved line height for code */
-    }
-    ul, ol {
-      padding-left: 1.5rem;
-      margin-bottom: 1.2rem;
-    }
-    li {
-      margin-bottom: 0.6rem;
-      line-height: 1.6;
-    }
-    .progress-bar-container {
-      width: 100%;
-      height: 5px;
-      background-color: #e0e0e0;
-      position: fixed;
-      top: 0;
-      left: 0;
-      z-index: 1000;
-    }
-    .progress-bar {
-      height: 100%;
-      width: 0%;
-      background-color: #0070d2;
-      transition: width 0.3s ease-out;
-    }
-    .slide-container {
-      width: 90%;
-      max-width: 960px;
-      margin-bottom: 20px;
-      background-color: #fff;
-      border: 1px solid #ddd;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-      border-radius: 8px;
-      overflow: hidden;
-    }
-    .slide {
-      display: none;
-      padding: 2rem 3rem;
-      min-height: 350px;
-      animation: fadeIn 0.5s ease-in-out;
-    }
-    .slide.active {
-      display: block;
-    }
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(10px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-    .navigation-buttons {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      gap: 10px;
-      margin: 20px auto;
-    }
-    .navigation-buttons button {
-      background-color: #0070d2;
-      color: white;
-      border: none;
-      border-radius: 20px;
-      padding: 10px 20px;
-      font-size: 1rem;
-      font-weight: 600;
-      cursor: pointer;
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-      transition: background-color 0.2s ease, transform 0.1s ease;
-    }
-    .navigation-buttons button:hover:not(:disabled) {
-      background-color: #005fb2;
-      transform: translateY(-1px);
-    }
-    .navigation-buttons button:disabled {
-      background-color: #c0c0c0;
-      cursor: not-allowed;
-    }
-    .slide-counter {
-      font-size: 1rem;
-      font-weight: 600;
-      color: #555;
-      min-width: 60px;
-      text-align: center;
-    }
-    .note {
-      background-color: #eef1f3;
-      padding: 1em;
-      border-left: 5px solid #0070d2;
-      margin-top: 1.5em;
-      border-radius: 4px;
-    }
-    .note-important {
-      background-color: #fff3cd;
-      border-left-color: #ffeeba;
-      color: #856404;
-    }
-    .note-important p {
-        margin-bottom: 0.5em;
-    }
-  </style>
+        .progress-bar-container {
+            width: 100%;
+            height: 8px;
+            background-color: #e0e0e0;
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 1001;
+        }
+
+        .progress-bar {
+            height: 100%;
+            width: 0%;
+            background-color: #0070d2;
+            transition: width 0.3s ease-out;
+        }
+
+        .slide-container {
+            width: 90%;
+            max-width: 1320px;
+            margin: 40px auto 20px auto;
+            background-color: #fff;
+            border: 1px solid #ddd;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .slide {
+            display: none;
+            padding: 30px 40px;
+            min-height: 400px;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        .slide.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        h1, h2, h3, h4 {
+            color: #003972;
+            margin-bottom: 0.75em;
+        }
+        h1 { font-size: 2.2em; text-align: center; margin-bottom: 1em; color: #001B35; }
+        h2 { font-size: 1.8em; border-bottom: 2px solid #00A1E0; padding-bottom: 0.3em; margin-top: 1.5em;}
+        h3 { font-size: 1.4em; margin-top: 1.2em; }
+        
+        p { margin-bottom: 1.1em; }
+        ul, ol { margin-bottom: 1em; padding-left: 25px; }
+        li { margin-bottom: 0.6em; }
+
+        code {
+            font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace;
+            background-color: #eef1f3;
+            padding: 0.2em 0.4em;
+            border-radius: 4px;
+            font-size: 0.9em;
+        }
+
+        .code-block-wrapper {
+            position: relative;
+            margin: 1.5em 0;
+        }
+
+        pre {
+            background-color: #2d2d2d;
+            color: #f0f0f0;
+            padding: 20px;
+            padding-top: 45px;
+            border-radius: 6px;
+            overflow-x: auto;
+            font-size: 0.9em;
+            line-height: 1.6;
+        }
+        
+        .copy-code-button {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background-color: #0070d2;
+            color: white;
+            border: 1px solid #005fb2;
+            padding: 6px 12px;
+            font-size: 0.8em;
+            font-weight: bold;
+            border-radius: 4px;
+            cursor: pointer;
+            opacity: 0.8;
+            transition: all 0.2s ease-in-out;
+        }
+        .copy-code-button:hover {
+            opacity: 1;
+            background-color: #005fb2;
+        }
+        .copy-code-button.copied {
+            background-color: #28a745;
+            border-color: #1e7e34;
+        }
+
+        .navigation-buttons {
+            display: inline-flex;
+            align-items: center;
+            background-color: #e9ecef;
+            border-radius: 30px;
+            padding: 6px 8px;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+            margin: 30px auto;
+            border: 1px solid #d1d9e0;
+        }
+
+        .navigation-buttons button, .slide-counter {
+            font-size: 0.9rem;
+            font-weight: 500;
+            border-radius: 25px;
+            transition: all 0.2s ease;
+            margin: 0 3px;
+        }
+
+        .navigation-buttons button {
+            border: none;
+            cursor: pointer;
+            padding: 9px 18px;
+            min-width: 90px;
+        }
+        
+        .navigation-buttons button:not(:disabled) {
+            background-color: #007bff;
+            color: white;
+        }
+        .navigation-buttons button:not(:disabled):hover {
+            background-color: #0056b3;
+            transform: translateY(-1px);
+        }
+
+        .navigation-buttons button:disabled {
+            background-color: #d8dfe3;
+            color: #9ba5ae;
+            cursor: not-allowed;
+        }
+        
+        .slide-counter {
+            color: #343a40;
+            padding: 9px 15px;
+            background-color: transparent;
+            white-space: nowrap;
+        }
+        
+        .note {
+            background-color: #eef1f3;
+            padding: 1em;
+            border-left: 5px solid #0070d2;
+            margin-top: 1.5em;
+            border-radius: 4px;
+        }
+        .note-important {
+            background-color: #fff3cd;
+            border-left-color: #ffeeba;
+            color: #856404;
+        }
+        .note-important p {
+            margin-bottom: 0.5em;
+        }
+    </style>
 </head>
 <body>
-  <div class="progress-bar-container">
-    <div class="progress-bar" id="progressBar"></div>
-  </div>
+    <div class="progress-bar-container">
+        <div class="progress-bar" id="progressBar"></div>
+    </div>
 
-  <main role="region" aria-live="polite">
-    <h1>🚀 Salesforce Agentforce Lab: Multilingual Support Agent 🌎</h1>
+    <h1>🚀 Agentforce Lab: Multilingual Support Agent 🌎</h1>
+
     <div class="slide-container">
-    
-      <div class="slide active">
-        <h2>Lab Overview & Business Impact</h2>
-        <h3>The Challenge: Information Overload 😩</h3>
-        <p>In today's fast-paced world, customers expect support in their own language. Yet many Salesforce implementations offer English-only help.</p>
-        <h3>The Solution: Multilingual Agent Assistant ✨</h3>
-        <p>This lab walks you through creating an <strong>Agentforce-powered multilingual assistant</strong> integrated with the <strong>Gemini API</strong> using Apex, Flow, and Topics + Actions.</p>
-        <h3>Real-Life Use Cases 💡</h3>
-        <ul>
-          <li><strong>Retail Customer Service:</strong> Customers from different regions chat in Spanish, French, or Hindi and receive fluent replies.</li>
-          <li><strong>Travel or Hospitality:</strong> Tourists inquire in their native language; agents get automated multilingual answers.</li>
-          <li><strong>Education Platforms:</strong> Global students raise questions in diverse languages, getting intelligent and localized support.</li>
-        </ul>
-      </div>
-
-      <div class="slide">
-        <h2>Pre-requisites</h2>
-        <ul>
-          <li>Salesforce Developer Org with Einstein Agentforce enabled.</li>
-          <li>Access to setup Named Credentials or Remote Site Settings.</li>
-          <li>A Google Gemini API key.</li>
-          <li>Basic familiarity with Apex, Flow Builder, and Setup.</li>
-        </ul>
-      </div>
-
-      <div class="slide">
-        <h2>Lab Step 1: Gemini API Authentication 🔑</h2>
-        <p>We need to securely authenticate our Apex callouts to the Gemini API.</p>
-        
-        <h3>Your Task (Lab Simplicity)</h3>
-        <div class="note">
-            <p>For this lab, you can take the simple path: <strong>place the Gemini API Key directly in your Apex class</strong>. This is quick and works well for a temporary lab environment. If you choose this path, you must complete the "Configure Remote Site" step on the next slide.</p>
-        </div>
-
-        <h3>Best Practice Demo (Recommended)</h3>
-        <div class="note note-important">
-            <p><strong>⚠️ In a real project, never hardcode API keys.</strong></p>
-            <p>I will be demonstrating the best practice: storing the API key securely within a <strong>Named Credential</strong>. This method is more secure, manageable, and allows you to bypass the "Remote Site Settings" step. We will then see how to call this Named Credential from Apex.</p>
-        </div>
-      </div>
-
-      <div class="slide">
-        <h2>Step 2: Configure Remote Site (Simple Path Only)</h2>
-        <p>This step is only required if you are placing the API key directly in your Apex code.</p>
-        <div class="note note-important">
-            <p><strong>Note:</strong> If you follow the best practice demo using a <strong>Named Credential</strong>, you can <strong>skip this slide</strong>, as the Named Credential's URL automatically authorizes the callout.</p>
-        </div>
-        <p>To authorize the endpoint for a direct callout:</p>
-        <ol>
-          <li>In Setup, navigate to <strong>Remote Site Settings</strong>.</li>
-          <li>Click <strong>New Remote Site</strong> and enter the details:
+        <div class="slide active">
+            <h2>Lab Overview & Business Impact</h2>
+            <h3>The Challenge: Information Overload 😩</h3>
+            <p>In today's fast-paced world, customers expect support in their own language. Yet many Salesforce implementations offer English-only help.</p>
+            <h3>The Solution: Multilingual Agent Assistant ✨</h3>
+            <p>This lab walks you through creating an <strong>Agentforce-powered multilingual assistant</strong> integrated with the <strong>Gemini API</strong> using Apex, Flow, and Topics + Actions.</p>
+            <h3>Real-Life Use Cases 💡</h3>
             <ul>
-              <li><strong>Name:</strong> <code>Gemini_API</code></li>
-              <li><strong>URL:</strong> <code>https://generativelanguage.googleapis.com</code></li>
+                <li><strong>Retail Customer Service:</strong> Customers from different regions chat in Spanish, French, or Hindi and receive fluent replies.</li>
+                <li><strong>Travel or Hospitality:</strong> Tourists inquire in their native language; agents get automated multilingual answers.</li>
+                <li><strong>Education Platforms:</strong> Global students raise questions in diverse languages, getting intelligent and localized support.</li>
             </ul>
-          </li>
-        </ol>
-      </div>
+        </div>
 
-      <div class="slide">
-        <h2>Step 3: Create Apex Class</h2>
-        <p>Create the <code>MultiLingualSupportController</code> class. Below is an example showing how to structure the callout using either a Named Credential or a hardcoded endpoint.</p>
-        <pre><code>public with sharing class MultiLingualSupportController {
-    
-    // ... Inner classes and Invocable Method variables ...
-
-    private static String getMultilingualReply(String userMsg) {
-        HttpRequest req = new HttpRequest();
-        req.setMethod('POST');
-        req.setHeader('Content-Type', 'application/json');
-
-        // --- CHOOSE ONE METHOD BELOW ---
-
-        // BEST PRACTICE: Use Named Credential (Demo Approach)
-        // The endpoint is 'callout:' + Your_Named_Credential_Name
-        // The full path is appended after the base URL.
-        req.setEndpoint('callout:Gemini_API/v1beta/models/gemini-1.5-flash:generateContent');
-        // Note: The API Key is handled by the Named Credential!
-
-        /*
-        // FOR LAB SIMPLICITY: Hardcoded Endpoint
-        // (Requires Remote Site Setting from Step 2)
-        String apiKey = 'PASTE_YOUR_GEMINI_API_KEY_HERE';
-        String endpoint = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=' + apiKey;
-        req.setEndpoint(endpoint);
-        */
-
-
-        // ... rest of the method (JSON body, http.send(), parsing) ...
+        <div class="slide">
+            <h2>Pre-requisites</h2>
+            <ul>
+              <li>Salesforce Developer Org with Einstein Agentforce enabled.</li>
+              <li>Access to setup Named Credentials or Remote Site Settings.</li>
+              <li>A Google Gemini API key.</li>
+              <li>Basic familiarity with Apex, Flow Builder, and Setup.</li>
+            </ul>
+        </div>
         
-        try {
-            // ... http.send(req) and parse response ...
-            return 'Successful reply from AI'; // Placeholder
-        } catch (Exception e) {
-            return 'Error: ' + e.getMessage(); // Placeholder
-        }
+        <div class="slide">
+            <h2>Lab Step 1: Gemini API Authentication 🔑</h2>
+            <p>We need to securely authenticate our Apex callouts to the Gemini API.</p>
+            <h3>Your Task (Lab Simplicity)</h3>
+            <div class="note">
+                <p>For this lab, you can take the simple path: <strong>place the Gemini API Key directly in your Apex class</strong>. This is quick and works well for a temporary lab environment. If you choose this path, you must complete the "Configure Remote Site" step on the next slide.</p>
+            </div>
+            <h3>Best Practice Demo (Recommended)</h3>
+            <div class="note note-important">
+                <p><strong>⚠️ In a real project, never hardcode API keys.</strong></p>
+                <p>I will be demonstrating the best practice: storing the API key securely within a <strong>Named Credential</strong>. This method is more secure, manageable, and allows you to bypass the "Remote Site Settings" step. We will then see how to call this Named Credential from Apex.</p>
+            </div>
+        </div>
+
+        <div class="slide">
+            <h2>Step 2: Configure Remote Site (Simple Path Only)</h2>
+            <p>This step is only required if you are placing the API key directly in your Apex code.</p>
+            <div class="note note-important">
+                <p><strong>Note:</strong> If you follow the best practice demo using a <strong>Named Credential</strong>, you can <strong>skip this slide</strong>, as the Named Credential's URL automatically authorizes the callout.</p>
+            </div>
+            <p>To authorize the endpoint for a direct callout:</p>
+            <ol>
+              <li>In Setup, navigate to <strong>Remote Site Settings</strong>.</li>
+              <li>Click <strong>New Remote Site</strong> and enter the details:
+                <ul>
+                  <li><strong>Name:</strong> <code>Gemini_API</code></li>
+                  <li><strong>URL:</strong> <code>https://generativelanguage.googleapis.com</code></li>
+                </ul>
+              </li>
+            </ol>
+        </div>
+
+        <div class="slide">
+            <h2>Lab Step 3: Apex Code Walkthrough 👨‍💻</h2>
+            <p>This Apex class, <code>MultiLingualSupportController</code>, handles the callout to the Gemini API using the Named Credential method.</p>
+            <div class="code-block-wrapper">
+                <button class="copy-code-button" aria-label="Copy Apex Code">📋 Copy</button>
+                <pre><code class="language-apex">public with sharing class MultiLingualSupportController {
+    
+    // BEST PRACTICE: Defines the Named Credential.
+    // 'GeminiAPIFallback' must match the API name of your Named Credential.
+    private static final String ENDPOINT = 'callout:GeminiAPIFallback/v1beta/models/gemini-1.5-flash:generateContent';
+    
+    public class Input {
+        @InvocableVariable(required=true)
+        public String userMessage;
+        @InvocableVariable
+        public String contextData;
+    }
+    
+    public class Output {
+        @InvocableVariable
+        public String replyText;
+    }
+    
+    @InvocableMethod(label='Get Multilingual Reply')
+    public static List&lt;Output&gt; getMultilingualReplyFromFlow(List&lt;Input&gt; inputs) {
+        // ... method logic ...
+    }
+    
+    private static String getMultilingualReply(String userMessage, String contextData) {
+        // ... method logic ...
     }
 }</code></pre>
-      </div>
+            </div>
+        </div>
+        
+        <div class="slide">
+            <h2>Lab Step 4: Flow Configuration</h2>
+             <ol>
+                <li>In Setup, go to <strong>Flows</strong> and create a new <strong>Screen Flow</strong>.</li>
+                <li>Add an <strong>Action</strong> element to the canvas and filter for your <strong>Get Multilingual Reply</strong> Apex Action.</li>
+                <li>Map the flow inputs and capture the outputs.</li>
+                <li>Add a Screen element to display the reply. Save and activate.</li>
+            </ol>
+        </div>
 
-      <div class="slide">
-        <h2>Step 4: Build a Flow</h2>
-        <ol>
-          <li>Go to <code>Setup > Flow</code>, create a new flow.</li>
-          <li>Add an <strong>Action</strong> element.</li>
-          <li>Select <code>MultiLingualSupportController.getMultilingualReplyFromFlow</code>.</li>
-          <li>Pass the input message and (optionally) order context.</li>
-          <li>Capture the <code>replyText</code> in a Text variable.</li>
-          <li>Add a screen element to show the result.</li>
-          <li>Save and activate the flow.</li>
-        </ol>
-      </div>
+        <div class="slide">
+            <h2>Lab Step 5: Agentforce Configuration</h2>
+            <ol>
+                <li>In Setup, go to <strong>Agentforce</strong>.</li>
+                <li>Create a new agent named <strong>Multilingual Support Agent</strong>.</li>
+                <li>Within the agent, create a new topic called <strong>Multilingual Inquiry Handling</strong>.</li>
+            </ol>
+        </div>
+        
+        <div class="slide">
+            <h2>Lab Step 6: Create Agent Action</h2>
+            <p>The final configuration step is to link your Flow to the Agentforce topic.</p>
+            <ol>
+                <li>Under your topic, add a new action of type <strong>Flow</strong>.</li>
+                <li>Select the flow you just built from the dropdown menu.</li>
+                <li>Set the <strong>Action Instructions</strong> to: "Send the user's message to the multilingual assistant and return its reply."</li>
+            </ol>
+        </div>
+        
+        <div class="slide">
+            <h2>Lab Step 7: Test & Activate</h2>
+            <p>Let's see your AI assistant in action!</p>
+            <ul>
+                <li>From the Agentforce builder, click <strong>Test Agent</strong>.</li>
+                <li>Enter a query in another language, such as <code>"¿Dónde está mi pedido 1001?"</code>.</li>
+                <li>Verify that the agent uses your Flow and Apex class to generate a helpful, contextual response in Spanish.</li>
+            </ul>
+        </div>
 
-      <div class="slide">
-        <h2>Step 5: Configure Agentforce</h2>
-        <ol>
-          <li>Go to <code>Setup > Agentforce</code>.</li>
-          <li>Create a new agent: <strong>Multilingual Support Agent</strong>.</li>
-          <li>Create a topic: <strong>Multilingual Inquiry Handling</strong>.</li>
-          <li>Use this topic prompt: <em>Use this topic to process customer questions in various languages and provide appropriate responses.</em></li>
-          <li>Let the system generate language-handling logic, or refine it.</li>
-        </ol>
-      </div>
+        <div class="slide">
+            <h2>Congratulations! 🎉</h2>
+            <h3>What You've Accomplished</h3>
+            <ul>
+                <li>Configured a secure Salesforce-to-Google-Cloud callout.</li>
+                <li>Built a powerful, Invocable Apex action.</li>
+                <li>Created a Flow to orchestrate logic without more code.</li>
+                <li>Deployed a generative AI feature within Salesforce Agentforce.</li>
+            </ul>
+        </div>
+    </div>
 
-      <div class="slide">
-        <h2>Step 6: Add an Agent Action</h2>
-        <ol>
-          <li>Under your topic, add a new action of type <strong>Flow</strong>.</li>
-          <li>Select your flow from the dropdown.</li>
-          <li><strong>Action Instructions:</strong> "Send the user's message to the multilingual assistant and return its reply."</li>
-          <li><strong>Loading Text:</strong> "Generating multilingual response..."</li>
-        </ol>
-      </div>
+    <div class="navigation-buttons">
+        <button id="prevBtn" onclick="changeSlide(-1)" type="button">❮ Previous</button>
+        <span id="slideCounter" class="slide-counter">1 / 10</span>
+        <button id="nextBtn" onclick="changeSlide(1)" type="button">Next ❯</button>
+    </div>
 
-      <div class="slide">
-        <h2>Step 7: Test & Activate</h2>
-        <ul>
-          <li>Click <strong>Test Agent</strong>.</li>
-          <li>Enter queries like <code>"¿Qué hora llega mi pedido número 1001?"</code>.</li>
-          <li>You should see a contextual response in Spanish generated by Gemini.</li>
-        </ul>
-        <h3>Lab Complete! 🎉</h3>
-      </div>
+    <script>
+        // Script includes slide navigation and copy-to-clipboard functionality
+        document.addEventListener('DOMContentLoaded', () => {
+            let currentSlide = 0;
+            const slides = document.querySelectorAll('.slide');
+            const totalSlides = slides.length;
+            const prevButton = document.getElementById('prevBtn');
+            const nextButton = document.getElementById('nextBtn');
+            const progressBar = document.getElementById('progressBar');
+            const slideCounterElement = document.getElementById('slideCounter');
 
-    </div> 
-  </main>
+            function updateControls() {
+                if (totalSlides > 0) {
+                    const progressPercentage = totalSlides > 1 ? (currentSlide / (totalSlides - 1)) * 100 : 0;
+                    if(progressBar) progressBar.style.width = progressPercentage + '%';
+                    if(slideCounterElement) slideCounterElement.textContent = (currentSlide + 1) + ' / ' + totalSlides;
+                }
+                if(prevButton) prevButton.disabled = (currentSlide === 0);
+                if(nextButton) nextButton.disabled = (currentSlide === totalSlides - 1);
+            }
 
-  <div class="navigation-buttons">
-    <button id="prevBtn" type="button">❮ Previous</button>
-    <span id="slideCounter">1 / 9</span>
-    <button id="nextBtn" type="button">Next ❯</button>
-  </div>
+            function showSlide(index) {
+                if (!slides || slides.length === 0 || index < 0 || index >= totalSlides) return;
+                slides.forEach((slide, i) => {
+                    slide.classList.toggle('active', i === index);
+                });
+                currentSlide = index;
+                updateControls();
+            }
 
-  <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      let currentSlide = 0;
-      const slides = document.querySelectorAll('.slide');
-      const totalSlides = slides.length;
-      
-      const prevButton = document.getElementById('prevBtn');
-      const nextButton = document.getElementById('nextBtn');
-      const slideCounter = document.getElementById('slideCounter');
-      const progressBar = document.getElementById('progressBar');
+            window.changeSlide = (step) => {
+                const newIndex = currentSlide + step;
+                if (newIndex >= 0 && newIndex < totalSlides) {
+                    showSlide(newIndex);
+                }
+            };
+            
+            function copyCode(buttonElement) {
+                const preElement = buttonElement.parentElement.querySelector('pre');
+                if (preElement) {
+                    navigator.clipboard.writeText(preElement.innerText).then(() => {
+                        buttonElement.innerHTML = '✓ Copied!';
+                        buttonElement.classList.add('copied');
+                        setTimeout(() => {
+                            buttonElement.innerHTML = '📋 Copy';
+                            buttonElement.classList.remove('copied');
+                        }, 2000);
+                    }).catch(err => console.error('Failed to copy code: ', err));
+                }
+            }
 
-      function updateControls() {
-        const progressPercentage = totalSlides > 1 ? (currentSlide / (totalSlides - 1)) * 100 : 0;
-        progressBar.style.width = progressPercentage + '%';
-        slideCounter.textContent = (currentSlide + 1) + ' / ' + totalSlides;
-        prevButton.disabled = (currentSlide === 0);
-        nextButton.disabled = (currentSlide === totalSlides - 1);
-      }
+            document.querySelectorAll('.copy-code-button').forEach(button => {
+                button.addEventListener('click', () => copyCode(button));
+            });
 
-      function showSlide(index) {
-        slides.forEach(slide => slide.classList.remove('active'));
-        slides[index].classList.add('active');
-        currentSlide = index;
-        updateControls();
-      }
-
-      nextButton.addEventListener('click', () => {
-        if (currentSlide < totalSlides - 1) {
-          showSlide(currentSlide + 1);
-        }
-      });
-
-      prevButton.addEventListener('click', () => {
-        if (currentSlide > 0) {
-          showSlide(currentSlide - 1);
-        }
-      });
-
-      showSlide(0);
-    });
-  </script>
+            showSlide(0);
+        });
+    </script>
 </body>
 </html>
