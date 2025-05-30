@@ -94,7 +94,7 @@
             background-color: #2d2d2d;
             color: #f0f0f0;
             padding: 20px;
-            padding-top: 45px;
+            padding-top: 45px; /* Space for copy button */
             border-radius: 6px;
             overflow-x: auto;
             font-size: 0.9em;
@@ -188,6 +188,22 @@
         .note-important p {
             margin-bottom: 0.5em;
         }
+        .note-action { background-color: #d4edda; border-left-color: #c3e6cb; color: #155724;}
+        .note-action::before { content: "➡️"; font-weight: bold; margin-right: 8px; font-size: 1.2em; vertical-align: middle; }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1em 0;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
     </style>
 </head>
 <body>
@@ -255,15 +271,49 @@
         </div>
 
         <div class="slide">
+            <h2>Optional Step: Create Legacy Named Credential (Best Practice Demo)</h2>
+            <p>If you're following the best practice, let's create a Named Credential to securely store the API endpoint and handle authentication. This replaces the need for Remote Site Settings for this callout.</p>
+            <div class="note note-action">
+                <p>Follow these steps to create the Named Credential:</p>
+                <ol>
+                    <li>Go to <strong>Setup</strong> → <strong>Named Credentials</strong>.</li>
+                    <li>Click <strong>New Named Credential</strong>. (If prompted, select "New Legacy" if your org has External Credentials enabled by default).</li>
+                    <li>Enter the following details:
+                        <ul>
+                            <li><strong>Label:</strong> <code>GeminiAPIFallback</code></li>
+                            <li><strong>Name:</strong> <code>GeminiAPIFallback</code> (This will auto-populate)</li>
+                            <li><strong>URL:</strong> <code>https://generativelanguage.googleapis.com</code> 
+                                <br>(The Apex code will append the rest of the path: <code>/v1beta/models/gemini-1.5-flash:generateContent</code>. Your API key will be added as a parameter in the Apex if you use the direct key method, or handled by the NC if using custom headers - for this lab, we'll assume the key is added in Apex or appended to the URL here if you are not using custom headers for the key).
+                            </li>
+                            <li><strong>Identity Type:</strong> <code>Anonymous</code></li>
+                            <li><strong>Authentication Protocol:</strong> <code>No Authentication</code></li>
+                            <li>Ensure <strong>Generate Authorization Header</strong> is <em>unchecked</em>.</li>
+                        </ul>
+                    </li>
+                    <li>Click <strong>Save</strong>.</li>
+                </ol>
+                <p>Your Named Credential should look similar to this (note: the screenshot shows the full path in the URL; for our Apex, we only need the base URL here if the Apex appends the path and key):</p>
+                <img src="https://i.imgur.com/z9kP7qF.png" alt="Screenshot of Named Credential Setup" style="width:100%; max-width:700px; border:1px solid #ccc; margin-top:10px;">
+                <p style="font-size:0.9em; text-align:center;">(Image based on provided screenshot for reference)</p>
+            </div>
+        </div>
+
+        <div class="slide">
             <h2>Lab Step 3: Apex Code Walkthrough 👨‍💻</h2>
-            <p>This Apex class, <code>MultiLingualSupportController</code>, handles the callout to the Gemini API using the Named Credential method.</p>
+            <p>This Apex class, <code>MultiLingualSupportController</code>, handles the callout to the Gemini API. The example below uses the Named Credential method.</p>
             <div class="code-block-wrapper">
                 <button class="copy-code-button" aria-label="Copy Apex Code">📋 Copy</button>
                 <pre><code class="language-apex">public with sharing class MultiLingualSupportController {
     
     // BEST PRACTICE: Defines the Named Credential.
     // 'GeminiAPIFallback' must match the API name of your Named Credential.
-    private static final String ENDPOINT = 'callout:GeminiAPIFallback/v1beta/models/gemini-1.5-flash:generateContent';
+    // The path and API key parameter are appended here.
+    // If your Named Credential URL already includes the full path and key, 
+    // this ENDPOINT would just be 'callout:GeminiAPIFallback'.
+    private static final String NAMED_CREDENTIAL_BASE = 'callout:GeminiAPIFallback';
+    private static final String API_PATH_AND_MODEL = '/v1beta/models/gemini-1.5-flash:generateContent';
+    // For lab simplicity, if not using NC for key management:
+    // private static final String API_KEY_PARAM = '?key=YOUR_API_KEY_HERE'; 
     
     public class Input {
         @InvocableVariable(required=true)
@@ -279,25 +329,151 @@
     
     @InvocableMethod(label='Get Multilingual Reply')
     public static List&lt;Output&gt; getMultilingualReplyFromFlow(List&lt;Input&gt; inputs) {
-        // ... method logic ...
+        List&lt;Output&gt; results = new List&lt;Output&gt;();
+        for (Input i : inputs) {
+            Output o = new Output();
+            // Ensure getMultilingualReply is called correctly
+            o.replyText = getMultilingualReply(i.userMessage, i.contextData);
+            results.add(o);
+        }
+        return results;
     }
     
     private static String getMultilingualReply(String userMessage, String contextData) {
-        // ... method logic ...
+        try {
+            String prompt = 'You are a multilingual support agent. Answer user questions in the language they used.' + '\\n\\n' +
+                'User: ' + userMessage + '\\n' +
+                (String.isNotBlank(contextData) ? 'Order Info: ' + contextData + '\\n' : 'Order Info: The order 1001 is currently marked as shipped and will arrive soon.\\n') +
+                'Agent: Provide a helpful, friendly response in the same language as the user.';
+
+            Map&lt;String, Object&gt; body = new Map&lt;String, Object&gt;{
+                'contents' => new List&lt;Object&gt;{ 
+                    new Map&lt;String, Object&gt;{
+                        'parts' => new List&lt;Object&gt;{ new Map&lt;String, Object&gt;{ 'text' => prompt } }
+                    }
+                }
+            };
+                
+            HttpRequest req = new HttpRequest();
+            req.setMethod('POST');
+            req.setHeader('Content-Type', 'application/json');
+            req.setBody(JSON.serialize(body));
+            
+            // Construct the full endpoint
+            // If your API_KEY_PARAM is used, ensure it's defined above or passed securely
+            String fullEndpoint = NAMED_CREDENTIAL_BASE + API_PATH_AND_MODEL; // + API_KEY_PARAM (if key not in NC)
+            req.setEndpoint(fullEndpoint); 
+            
+            HttpResponse res = new Http().send(req);
+            
+            if (res.getStatusCode() == 200) {
+                Map&lt;String, Object&gt; jsonResp = (Map&lt;String, Object&gt;) JSON.deserializeUntyped(res.getBody());
+                // ... (parsing logic from your original code) ...
+                if (jsonResp.containsKey('candidates')) {
+                    List&lt;Object&gt; candidates = (List&lt;Object&gt;) jsonResp.get('candidates');
+                    if (!candidates.isEmpty()) {
+                        Map&lt;String, Object&gt; first = (Map&lt;String, Object&gt;) candidates[0];
+                        Map&lt;String, Object&gt; content = (Map&lt;String, Object&gt;) first.get('content');
+                        List&lt;Object&gt; parts = (List&lt;Object&gt;) content.get('parts');
+                        if (!parts.isEmpty()) {
+                            Map&lt;String, Object&gt; part = (Map&lt;String, Object&gt;) parts[0];
+                            return (String) part.get('text');
+                        }
+                    }
+                }
+                return 'No valid response from Gemini.';
+            } else {
+                return 'Error: ' + res.getStatusCode() + ' - ' + res.getBody();
+            }
+        } catch (Exception e) {
+            System.debug('Gemini Error: ' + e.getMessage());
+            return 'Exception: ' + e.getMessage();
+        }
     }
 }</code></pre>
             </div>
         </div>
         
         <div class="slide">
-            <h2>Lab Step 4: Flow Configuration</h2>
-             <ol>
-                <li>In Setup, go to <strong>Flows</strong> and create a new <strong>Screen Flow</strong>.</li>
-                <li>Add an <strong>Action</strong> element to the canvas and filter for your <strong>Get Multilingual Reply</strong> Apex Action.</li>
-                <li>Map the flow inputs and capture the outputs.</li>
-                <li>Add a Screen element to display the reply. Save and activate.</li>
+            <h2>Lab Step 4: Flow Configuration ⚙️</h2>
+            <p>Let's create a Screen Flow to accept user input, call our Apex action, and display the AI's response.</p>
+
+            <h3>🔹 1. Create the Flow</h3>
+            <ol>
+                <li>Go to <strong>Setup → Flow</strong>.</li>
+                <li>Click <strong>New Flow</strong>.</li>
+                <li>Choose <strong>Screen Flow</strong> and click <strong>Create</strong>.</li>
             </ol>
+
+            <h3>🔹 2. Add the First Screen – “User Question”</h3>
+            <ul>
+                <li><strong>Label:</strong> <code>Customer Input</code></li>
+                <li>Drag a <strong>Text Area</strong> component onto the screen.
+                    <ul>
+                        <li><strong>API Name:</strong> <code>varUserQuestion</code></li>
+                        <li><strong>Label:</strong> <code>Your Question</code></li>
+                        <li><strong>Help Text:</strong> <code>Enter your question in any language. E.g. "¿Cuál es el estado de mi pedido 1001?"</code></li>
+                        <li>Mark as <strong>Required</strong>.</li>
+                    </ul>
+                </li>
+            </ul>
+
+            <h3>🔹 3. (Optional) Add a Resource for Context</h3>
+            <p>If you want to pass static context to the AI (e.g., for testing):</p>
+            <ol>
+                <li>In the Flow's Toolbox (left panel), click <strong>Manager → New Resource</strong>.</li>
+                <li><strong>Resource Type:</strong> <code>Variable</code></li>
+                <li><strong>API Name:</strong> <code>varContext</code></li>
+                <li><strong>Data Type:</strong> <code>Text</code></li>
+                <li><strong>Default Value:</strong> (Optional) <code>Order 1001 is currently Shipped and will arrive by May 28.</code></li>
+            </ol>
+
+            <h3>🔹 4. Add Apex Action – “Call Gemini”</h3>
+            <ul>
+                <li>Drag an <strong>Action</strong> element onto the canvas.</li>
+                <li>Filter for and select your Apex Class: <strong>MultiLingualSupportController</strong>.</li>
+                <li>Choose the Action: <strong>getMultilingualReplyFromFlow</strong> (this is the InvocableMethod).</li>
+                <li><strong>Label:</strong> <code>Call Gemini API</code></li>
+                <li><strong>Set Input Values:</strong>
+                    <ul>
+                        <li><code>contextData</code> (Apex): Assign <code>{!varContext}</code> (from your Flow variable).</li>
+                        <li><code>userMessage</code> (Apex): Assign <code>{!varUserQuestion}</code> (from the Text Area).</li>
+                    </ul>
+                </li>
+                <li><strong>Store Output Values:</strong>
+                    <ul>
+                        <li><code>replyText</code> (Apex Output): Click into the value field, select <strong>New Resource</strong>.
+                            <ul>
+                                <li><strong>Resource Type:</strong> <code>Variable</code></li>
+                                <li><strong>API Name:</strong> <code>varAIReply</code></li>
+                                <li><strong>Data Type:</strong> <code>Text</code></li>
+                                <li>Ensure "Available for output" is checked. Click <strong>Done</strong>.</li>
+                            </ul>
+                        </li>
+                    </ul>
+                </li>
+                <li>Click <strong>Done</strong>.</li>
+            </ul>
+
+            <h3>🔹 5. Add Final Screen – “Agent Response”</h3>
+            <ul>
+                <li>Drag another <strong>Screen</strong> element onto the canvas.</li>
+                <li><strong>Label:</strong> <code>Agent Response</code></li>
+                <li>Add a <strong>Display Text</strong> component.
+                    <ul>
+                        <li><strong>API Name:</strong> <code>displayAIReply</code></li>
+                        <li>In the text area, enter: <code>Gemini AI says: {!varAIReply}</code></li>
+                    </ul>
+                </li>
+            </ul>
+            
+            <h3>🔹 6. Connect the Elements</h3>
+            <p>Connect the flow elements in this order: Start → Screen: Customer Input → Action: Call Gemini → Screen: Agent Response → End.</p>
+            
+            <h3>🔹 7. Save and Test</h3>
+            <p>Save your flow (e.g., "Multilingual Support Agent Flow"). Debug it to ensure it correctly calls the Apex and displays the response.</p>
         </div>
+
 
         <div class="slide">
             <h2>Lab Step 5: Agentforce Configuration</h2>
@@ -312,7 +488,7 @@
             <h2>Lab Step 6: Create Agent Action</h2>
             <p>The final configuration step is to link your Flow to the Agentforce topic.</p>
             <ol>
-                <li>Under your topic, add a new action of type <strong>Flow</strong>.</li>
+                <li>Under your "Multilingual Inquiry Handling" topic, add a new action of type <strong>Flow</strong>.</li>
                 <li>Select the flow you just built from the dropdown menu.</li>
                 <li>Set the <strong>Action Instructions</strong> to: "Send the user's message to the multilingual assistant and return its reply."</li>
             </ol>
@@ -342,12 +518,11 @@
 
     <div class="navigation-buttons">
         <button id="prevBtn" onclick="changeSlide(-1)" type="button">❮ Previous</button>
-        <span id="slideCounter" class="slide-counter">1 / 10</span>
+        <span id="slideCounter" class="slide-counter">1 / 11</span> 
         <button id="nextBtn" onclick="changeSlide(1)" type="button">Next ❯</button>
     </div>
 
     <script>
-        // Script includes slide navigation and copy-to-clipboard functionality
         document.addEventListener('DOMContentLoaded', () => {
             let currentSlide = 0;
             const slides = document.querySelectorAll('.slide');
@@ -386,14 +561,20 @@
             function copyCode(buttonElement) {
                 const preElement = buttonElement.parentElement.querySelector('pre');
                 if (preElement) {
-                    navigator.clipboard.writeText(preElement.innerText).then(() => {
-                        buttonElement.innerHTML = '✓ Copied!';
-                        buttonElement.classList.add('copied');
-                        setTimeout(() => {
-                            buttonElement.innerHTML = '📋 Copy';
-                            buttonElement.classList.remove('copied');
-                        }, 2000);
-                    }).catch(err => console.error('Failed to copy code: ', err));
+                    navigator.clipboard.writeText(preElement.innerText || preElement.textContent) // Use innerText or textContent
+                        .then(() => {
+                            buttonElement.innerHTML = '✓ Copied!';
+                            buttonElement.classList.add('copied');
+                            setTimeout(() => {
+                                buttonElement.innerHTML = '📋 Copy';
+                                buttonElement.classList.remove('copied');
+                            }, 2000);
+                        })
+                        .catch(err => {
+                            console.error('Failed to copy: ', err);
+                            buttonElement.textContent = 'Error';
+                            setTimeout(() => { buttonElement.innerHTML = '📋 Copy'; }, 2000);
+                        });
                 }
             }
 
