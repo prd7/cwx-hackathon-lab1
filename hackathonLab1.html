@@ -100,6 +100,14 @@
             font-size: 0.9em;
             line-height: 1.6;
         }
+
+        pre code { 
+            background-color: transparent;
+            padding: 0;
+            font-size: 1em; 
+            color: inherit; 
+            white-space: inherit; 
+        }
         
         .copy-code-button {
             position: absolute;
@@ -293,8 +301,8 @@
                     <li>Click <strong>Save</strong>.</li>
                 </ol>
                 <p>Your Named Credential should look similar to this (note: the screenshot shows the full path in the URL; for our Apex, we only need the base URL here if the Apex appends the path and key):</p>
-                <img src="https://i.imgur.com/z9kP7qF.png" alt="Screenshot of Named Credential Setup" style="width:100%; max-width:700px; border:1px solid #ccc; margin-top:10px;">
-                <p style="font-size:0.9em; text-align:center;">(Image based on provided screenshot for reference)</p>
+                <img src="https://ibb.co/xK082vHY" alt="Screenshot of Named Credential Setup" style="width:100%; max-width:700px; border:1px solid #ccc; margin-top:10px;">
+                <p style="font-size:0.9em; text-align:center;"></p>
             </div>
         </div>
 
@@ -395,8 +403,8 @@
         </div>
         
         <div class="slide">
-            <h2>Lab Step 4: Flow Configuration ⚙️</h2>
-            <p>Let's create a Screen Flow to accept user input, call our Apex action, and display the AI's response.</p>
+            <h2>Lab Step 4: Flow Configuration (Screen Flow) ⚙️</h2>
+            <p>First, we'll create a Screen Flow to test our Apex action manually. This is a great way to debug before connecting it to the agent.</p>
 
             <h3>🔹 1. Create the Flow</h3>
             <ol>
@@ -476,26 +484,96 @@
 
 
         <div class="slide">
-            <h2>Lab Step 5: Agentforce Configuration</h2>
-            <ol>
-                <li>In Setup, go to <strong>Agentforce</strong>.</li>
-                <li>Create a new agent named <strong>Multilingual Support Agent</strong>.</li>
-                <li>Within the agent, create a new topic called <strong>Multilingual Inquiry Handling</strong>.</li>
+            <h2>Lab Step 5: Agentforce Configuration 🤖</h2>
+            <p>Now let's create our intelligent agent.</p>
+             <ol>
+                <li>In Setup, go to <strong>Agentforce</strong> and create a new agent.</li>
+                <li><strong>Description:</strong> <code>Handles customer inquiries in multiple languages using AI-powered responses.</code></li>
+                <li><strong>Role:</strong> <code>An AI Customer Support Representative whose job is to help customers with support questions in multiple languages.</code></li>
+                <li>Within the agent, create a new topic called <strong>Multilingual Inquiry Handling.</strong></li>
+                <li>Set the **Scope** to: <code>Provide accurate and context-aware responses to customer questions in their preferred language. You should not handle any other tasks outside of multilingual support.</code></li>
+                <li>In the "Instructions" section for the topic, remove any extra instructions and ensure only these two remain:
+                    <ul>
+                        <li>Detect Language: Identify the language of the customer's inquiry.</li>
+                        <li>Maintain Context: Use any provided context data to enhance the relevance of the response.</li>
+                    </ul>
+                </li>
             </ol>
         </div>
         
         <div class="slide">
-            <h2>Lab Step 6: Create Agent Action</h2>
-            <p>The final configuration step is to link your Flow to the Agentforce topic.</p>
+            <h2>Lab Step 6: Create an Autolaunched Flow ⚙️</h2>
+            <p>This flow will run in the background when called by the agent. It prepares data and calls our Apex class.</p>
+
+            <h3>🔹 1. Create the Flow</h3>
             <ol>
-                <li>Under your "Multilingual Inquiry Handling" topic, add a new action of type <strong>Flow</strong>.</li>
-                <li>Select the flow you just built from the dropdown menu.</li>
-                <li>Set the <strong>Action Instructions</strong> to: "Send the user's message to the multilingual assistant and return its reply."</li>
+                <li>Go to <strong>Setup → Flow</strong>.</li>
+                <li>Click <strong>New Flow</strong>.</li>
+                <li>Choose <strong>Autolaunched Flow (No Trigger)</strong>. Click <strong>Create</strong>.</li>
+                <li>Name the flow <code>MultilingualAgent_AutoLaunch</code>.</li>
             </ol>
+
+            <h3>🔹 2. Create Flow Variables</h3>
+            <p>In the Manager tab (left panel), create the following Text variables:</p>
+            <ul>
+                <li><code>userMessage</code>: Data Type: Text, Check "Available for input".</li>
+                <li><code>contextData</code>: Data Type: Text, Check "Available for input".</li>
+                <li><code>replyText</code>: Data Type: Text, Check "Available for output".</li>
+            </ul>
+
+            <h3>🔹 3. Add Assignment Element</h3>
+            <ol>
+                <li>Drag an "Assignment" element onto the canvas.</li>
+                <li><strong>Label:</strong> <code>AssignContext</code>.</li>
+                <li><strong>Set Variable Values:</strong> Set your flow variable <code>{!contextData}</code> (Operator: Equals) to the value: <code>Order 1001 is currently shipped and will arrive tomorrow.</code> (This is an example static context; in a real scenario, this might be dynamic.)</li>
+            </ol>
+            
+            <h3>🔹 4. Add Apex Action – “Call Gemini Multilingual Reply”</h3>
+            <ul>
+                <li>Drag an <strong>Action</strong> element onto the canvas.</li>
+                <li>Filter for and select your Apex Class: <strong>MultiLingualSupportController</strong>.</li>
+                <li>Choose the Action: <strong>getMultilingualReplyFromFlow</strong>.</li>
+                <li><strong>Label:</strong> <code>Call Gemini for Multilingual Reply</code></li>
+                <li><strong>Set Input Values:</strong>
+                    <ul>
+                        <li><code>contextData</code> (Apex): Assign <code>{!contextData}</code> (from your Flow variable).</li>
+                        <li><code>userMessage</code> (Apex): Assign <code>{!userMessage}</code> (from your Flow variable).</li>
+                    </ul>
+                </li>
+                 <li><strong>Store Output Values:</strong>
+                    <ul>
+                        <li><code>replyText</code> (Apex Output): Assign to your Flow variable <code>{!replyText}</code>.</li>
+                    </ul>
+                </li>
+                <li>Click <strong>Done</strong>.</li>
+            </ul>
+
+            <h3>🔹 5. Connect Elements & Activate</h3>
+            <p>Connect the flow elements in this order: Start → Assignment: AssignContext → Action: Call Gemini Multilingual Reply → End.</p>
+            <p>Save and Activate your flow.</p>
+        </div>
+
+        <div class="slide">
+            <h2>Lab Step 7: Create Agent Action</h2>
+            <p>The final step is to link your new autolaunched flow to the Agentforce topic.</p>
+            <div class="note note-action">
+                <ol>
+                    <li>Under your "Multilingual Inquiry Handling" topic, add a new action of type <strong>Flow</strong>.</li>
+                    <li>Select the <strong><code>MultilingualAgent_AutoLaunch</code></strong> flow from the dropdown.</li>
+                    <li><strong>Agent Action Instructions:</strong> <code>Use this action to generate a multilingual response to customer inquiries. It processes the user's message and returns a reply in the appropriate language.</code></li>
+                    <li><strong>Loading Text:</strong> <code>Generating your multilingual response</code></li>
+                </ol>
+            </div>
+            <h3>Input and Output Mapping</h3>
+            <p>Map the variables as shown in the screenshot to connect the agent's context to the flow's variables.</p>
+            <ul>
+                <li><strong>Inputs:</strong> Map the agent's `{{userMessage}}` to the flow's `userMessage` input variable. You can also map `{{contextData}}`.</li>
+                <li><strong>Output:</strong> Map the flow's `replyText` output variable back to the agent's `{{replyText}}` to be displayed to the user.</li>
+            </ul>
         </div>
         
         <div class="slide">
-            <h2>Lab Step 7: Test & Activate</h2>
+            <h2>Lab Step 8: Test & Activate</h2>
             <p>Let's see your AI assistant in action!</p>
             <ul>
                 <li>From the Agentforce builder, click <strong>Test Agent</strong>.</li>
